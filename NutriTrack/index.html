@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="theme-color" content="#1f1f1f">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NutriTrack</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- PANTALLA DE CONFIGURACIÓN INICIAL -->
+    <section id="setup-screen" class="screen hidden">
+        <div class="glass-container">
+            <h1>Bienvenido a NutriTrack</h1>
+            <p>Configuremos tus datos.</p>
+            <form id="setup-form">
+                <select id="gender" required><option value="M">Hombre</option><option value="F">Mujer</option></select>
+                <input type="number" id="age" placeholder="Edad" required>
+                <input type="number" id="weight" placeholder="Peso (kg)" required>
+                <input type="number" id="height" placeholder="Altura (cm)" required>
+                <select id="activity" required>
+                    <option value="1.2">Sedentario</option>
+                    <option value="1.375">Ligero</option>
+                    <option value="1.55">Moderado</option>
+                    <option value="1.725">Intenso</option>
+                </select>
+                <select id="goal" required>
+                    <option value="-500">Déficit (-500 kcal)</option>
+                    <option value="0">Mantener</option>
+                    <option value="300">Volumen (+300 kcal)</option>
+                </select>
+                <button type="submit" class="btn-primary">Empezar</button>
+            </form>
+        </div>
+    </section>
+    <!-- SETTINGS SCREEN -->
+<section id="settings-screen" class="screen hidden">
+    <header>
+        <h1>Ajustes</h1>
+        <button id="btn-close-settings" class="btn-secondary">Volver</button>
+    </header>
+    <div class="glass-container">
+        <form id="settings-form">
+            <label>Género</label>
+            <select id="settings-gender">
+                <option value="M">Hombre</option>
+                <option value="F">Mujer</option>
+            </select>
+            <label>Edad</label>
+            <input type="number" id="settings-age" required>
+            <label>Peso (kg)</label>
+            <input type="number" id="settings-weight" step="0.1" required>
+            <label>Altura (cm)</label>
+            <input type="number" id="settings-height" required>
+            <label>Actividad</label>
+            <select id="settings-activity">
+                <option value="1.2">Sedentario</option>
+                <option value="1.375">Ligero</option>
+                <option value="1.55">Moderado</option>
+                <option value="1.725">Intenso</option>
+            </select>
+            <label>Objetivo</label>
+            <select id="settings-goal">
+                <option value="-500">Déficit (-500 kcal)</option>
+                <option value="0">Mantener</option>
+                <option value="300">Volumen (+300 kcal)</option>
+            </select>
+            <button type="submit" class="btn-primary">Guardar Cambios</button>
+        </form>
+    </div>
+</section>
+
+<!-- HISTORY SCREEN -->
+<section id="history-screen" class="screen hidden">
+    <header>
+        <h1>Historial</h1>
+        <button id="btn-close-history" class="btn-secondary">Volver</button>
+    </header>
+    <div class="glass-container">
+        <div id="history-list" class="history-list"></div>
+    </div>
+</section>
+    <!-- DASHBOARD PRINCIPAL -->
+    <section id="dashboard" class="screen">
+       <header>
+            <div>
+                <h1>Resumen</h1>
+                <p id="current-date">Hoy</p>
+            </div>
+            <div class="header-actions">
+    <button id="btn-open-history" class="btn-icon">📅</button>
+    <button id="btn-open-settings" class="btn-icon">⚙️</button>
+</div>
+        </header>
+
+        <!-- Contenedor de todos los Anillos -->
+        <div class="rings-wrapper">
+            <!-- Anillo Principal: Calorías -->
+            <div class="main-ring-container">
+                <svg class="ring-svg" width="200" height="200" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="80" class="ring-bg"></circle>
+                    <circle cx="100" cy="100" r="80" class="ring-progress ring-cal" id="ring-calories"></circle>
+                </svg>
+                <div class="ring-text main-ring-text">
+                    <span id="cal-current" class="value-large">0</span> / <span id="cal-target">0</span><br>
+                    <small>kcal</small>
+                </div>
+            </div>
+
+            <!-- Anillos Secundarios: Macros y Agua -->
+            <div class="sub-rings-container">
+                <!-- Proteínas -->
+                <div class="sub-ring">
+                    <svg width="60" height="60" viewBox="0 0 80 80" class="ring-svg">
+                        <circle cx="40" cy="40" r="32" class="ring-bg"></circle>
+                        <circle cx="40" cy="40" r="32" class="ring-progress ring-pro" id="ring-protein"></circle>
+                    </svg>
+                    <div class="sub-ring-text">
+                        <span id="pro-current" class="val">0</span>/<span id="pro-target">0</span>g<br>
+                        <span class="label">Prot</span>
+                    </div>
+                </div>
+                <!-- Carbos -->
+                <div class="sub-ring">
+                    <svg width="60" height="60" viewBox="0 0 80 80" class="ring-svg">
+                        <circle cx="40" cy="40" r="32" class="ring-bg"></circle>
+                        <circle cx="40" cy="40" r="32" class="ring-progress ring-car" id="ring-carbs"></circle>
+                    </svg>
+                    <div class="sub-ring-text">
+                        <span id="car-current" class="val">0</span>/<span id="car-target">0</span>g<br>
+                        <span class="label">Carb</span>
+                    </div>
+                </div>
+                <!-- Grasas -->
+                <div class="sub-ring">
+                    <svg width="60" height="60" viewBox="0 0 80 80" class="ring-svg">
+                        <circle cx="40" cy="40" r="32" class="ring-bg"></circle>
+                        <circle cx="40" cy="40" r="32" class="ring-progress ring-fat" id="ring-fats"></circle>
+                    </svg>
+                    <div class="sub-ring-text">
+                        <span id="fat-current" class="val">0</span>/<span id="fat-target">0</span>g<br>
+                        <span class="label">Grasa</span>
+                    </div>
+                </div>
+                <!-- Agua -->
+                <div class="sub-ring">
+                    <svg width="60" height="60" viewBox="0 0 80 80" class="ring-svg">
+                        <circle cx="40" cy="40" r="32" class="ring-bg"></circle>
+                        <circle cx="40" cy="40" r="32" class="ring-progress ring-wat" id="ring-water"></circle>
+                    </svg>
+                    <div class="sub-ring-text">
+                        <span id="wat-current" class="val">0</span>ml<br>
+                        <span class="label">Agua</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Controles de Agua -->
+        <div class="water-controls glass-container">
+            <h3>💧 Registro de Agua</h3>
+            <div class="water-buttons">
+                <button class="btn-water" data-amount="250">+ 250 ml</button>
+                <button class="btn-water" data-amount="500">+ 500 ml</button>
+                <button class="btn-water" data-amount="-250">-250ml</button>
+            </div>
+        </div>
+        
+        <!-- Lista de Comidas -->
+        <div id="food-list" class="food-list">
+            <!-- Tarjetas generadas por JS -->
+        </div>
+
+        <!-- FAB para añadir comida -->
+        <button id="fab-add" class="fab">+</button>
+    </section>
+    <!-- PANTALLA DE AJUSTES -->
+    <section id="settings-screen" class="screen hidden">
+        <header>
+            <h1>Ajustes</h1>
+            <button id="btn-close-settings" class="btn-secondary">Volver</button>
+        </header>
+        <div class="glass-container">
+            <form id="settings-form">
+                <label>Género</label>
+                <select id="settings-gender">
+                    <option value="M">Hombre</option>
+                    <option value="F">Mujer</option>
+                </select>
+                <label>Edad</label>
+                <input type="number" id="settings-age" required>
+                <label>Peso (kg)</label>
+                <input type="number" id="settings-weight" step="0.1" required>
+                <label>Altura (cm)</label>
+                <input type="number" id="settings-height" required>
+                <label>Actividad</label>
+                <select id="settings-activity">
+                    <option value="1.2">Sedentario</option>
+                    <option value="1.375">Ligero</option>
+                    <option value="1.55">Moderado</option>
+                    <option value="1.725">Intenso</option>
+                </select>
+                <label>Objetivo</label>
+                <select id="settings-goal">
+                    <option value="-500">Déficit (-500 kcal)</option>
+                    <option value="0">Mantener</option>
+                    <option value="300">Volumen (+300 kcal)</option>
+                </select>
+                <button type="submit" class="btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </section>
+    <!-- PANTALLA DE HISTORIAL -->
+    <section id="history-screen" class="screen hidden">
+        <header>
+            <h1>Historial</h1>
+            <button id="btn-close-history" class="btn-secondary">Volver</button>
+        </header>
+        <div class="glass-container">
+            <div id="history-list" class="history-list">
+                <!-- Se rellena por JS -->
+            </div>
+        </div>
+    </section>
+    <section id="stats-screen" class="screen hidden">
+    <header>
+        <h1>Estadísticas</h1>
+        <button id="btn-close-stats" class="btn-secondary">Volver</button>
+    </header>
+    <div class="glass-container">
+        <canvas id="caloriesChart"></canvas>
+    </div>
+</section>
+    <!-- MODAL AÑADIR COMIDA -->
+    <!-- MODAL AÑADIR COMIDA -->
+    <div id="modal-add-food" class="modal hidden">
+        <div class="glass-modal">
+            <h2>Añadir Comida</h2>
+            <!-- Se eliminó la barra de búsqueda de aquí -->
+            <form id="food-form">
+                <input type="text" id="food-name" placeholder="Nombre" list="food-suggestions" required>
+                <datalist id="food-suggestions"></datalist>
+                <input type="number" id="food-p" placeholder="Proteínas (g)" required>
+                <input type="number" id="food-c" placeholder="Carbohidratos (g)" required>
+                <input type="number" id="food-g" placeholder="Grasas (g)" required>
+                <div class="auto-kcal">Kcal calculadas: <span id="food-kcal-preview">0</span></div>
+                <div class="modal-actions">
+                    <button type="button" id="btn-cancel" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

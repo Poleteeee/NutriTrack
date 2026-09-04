@@ -1,0 +1,310 @@
+:root {
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --glass-bg: rgba(40, 40, 40, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    
+    /* Colores Apple Fitness */
+   --color-calories: #FF1493; /* Rosa/Rojo */
+    --color-protein: #32CD32;  /* Verde */
+    --color-carbs: #00BFFF;    /* Azul */
+    --color-fat: #9370DB;      /* Morado */
+    --color-water: #00FA9A;    /* Turquesa/Agua */
+
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+.screen { padding: 20px; transition: opacity 0.3s ease; }
+.hidden { display: none !important; opacity: 0; }
+
+header h1 { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+header p { color: #888; font-size: 16px; font-weight: 500; text-transform: uppercase; }
+
+/* Glassmorphism */
+.glass-container, .glass-modal, .food-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+/* Formularios y Botones */
+input, select {
+    width: 100%; padding: 15px; margin-bottom: 15px;
+    background: rgba(255,255,255,0.1); border: none;
+    border-radius: 12px; color: white; font-size: 16px;
+    outline: none; transition: background 0.2s;
+}
+input:focus { background: rgba(255,255,255,0.2); }
+
+.btn-primary {
+    width: 100%; padding: 16px; border-radius: 16px;
+    background: var(--color-calories); color: white;
+    border: none; font-size: 18px; font-weight: 600;
+    cursor: pointer; transition: transform 0.1s, filter 0.2s;
+}
+.btn-primary:active { transform: scale(0.96); filter: brightness(0.8); }
+
+/* --- ANILLOS SVG ANIMADOS --- */
+.rings-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 10px;
+}
+.main-ring-container{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.sub-ring-text {
+    position: static; /* Quitamos absolute para que se alineen bien al lado del círculo */
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+.sub-ring {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 16px;
+    gap: 12px;
+}
+.sub-rings-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+    max-width: 320px;
+}
+.sub-ring-text .val { font-size: 15px; color: white; display: block; }
+.sub-ring-text .label { color: #888; text-transform: uppercase; font-size: 10px; }
+
+.ring-svg { transform: rotate(-90deg); }
+circle { fill: none; stroke-linecap: round; }
+
+/* Estilos Anillo Principal (Radio 80, Grosor 16, Circunferencia 502) */
+.main-ring-container circle { stroke-width: 16; }
+.main-ring-container .ring-progress { stroke-dasharray: 502; stroke-dashoffset: 502; }
+
+/* Estilos Anillos Pequeños (Radio 32, Grosor 8, Circunferencia 201) */
+.sub-ring circle { stroke-width: 8; }
+.sub-ring .ring-progress { stroke-dasharray: 201; stroke-dashoffset: 201; }
+
+.ring-bg { stroke: rgba(255, 255, 255, 0.1); }
+.ring-progress {
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+/* Colores de los Anillos */
+.ring-cal { stroke: var(--color-calories); filter: drop-shadow(0 0 6px var(--color-calories)); }
+.ring-pro { stroke: var(--color-protein); }
+.ring-car { stroke: var(--color-carbs); }
+.ring-fat { stroke: var(--color-fat); }
+.ring-wat { stroke: var(--color-water); }
+
+/* Textos dentro de los anillos */
+.ring-text { position: absolute; text-align: center; }
+.main-ring-text .value-large { font-size: 32px; font-weight: 800; }
+.main-ring-text small { color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+.sub-ring-text { position: absolute; text-align: center; font-size: 11px; font-weight: 600; line-height: 1.2; }
+.sub-ring-text .val { font-size: 14px; color: white; }
+.sub-ring-text .label { color: #888; text-transform: uppercase; font-size: 9px; }
+/* Botón Flotante (FAB) */
+.fab {
+    position: fixed; bottom: 30px; right: 30px;
+    width: 60px; height: 60px; border-radius: 30px;
+    background: var(--text-color); color: var(--bg-color);
+    font-size: 32px; border: none; font-weight: 300;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer;
+    z-index: 100;
+}
+/* --- LISTA DE COMIDAS --- */
+.food-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 100px; /* Espacio para que el botón FAB no tape la última comida */
+}
+
+.food-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px;
+}
+
+.food-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.food-time { font-size: 12px; color: #888; font-weight: 600; }
+.food-details h3 { font-size: 18px; margin: 0; font-weight: 700; }
+.food-macros { font-size: 13px; color: #bbb; }
+
+.food-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.food-kcal {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--color-calories);
+}
+.food-kcal small { font-size: 12px; font-weight: 600; color: #888; }
+
+.btn-icon {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.btn-delete { color: #ff4d4d; background: rgba(255, 77, 77, 0.15); }
+.btn-delete:active { background: rgba(255, 77, 77, 0.3); }
+
+/* --- CORRECCIÓN DE SUPERPOSICIÓN DE TEXTO EN ANILLOS SECUNDARIOS --- */
+.sub-ring {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 12px 15px !important;
+    gap: 15px !important; /* Espacio obligatorio entre el círculo y el texto */
+}
+
+.sub-ring .ring-svg {
+    position: relative !important;
+    flex-shrink: 0 !important; /* Evita que el SVG se encoja */
+}
+
+.sub-ring-text {
+    position: static !important; /* Anula el position: absolute que lo centraba */
+    transform: none !important;
+    text-align: left !important;
+    width: auto !important;
+}
+
+.sub-ring-text .val {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    display: block !important;
+}
+
+.sub-ring-text .label {
+    font-size: 11px !important;
+    color: #888888 !important;
+    text-transform: uppercase !important;
+}
+
+/* --- CONTROLES DE AGUA --- */
+.water-controls {
+    margin: 0 0 25px 0;
+    text-align: center;
+    padding: 15px;
+}
+
+.water-controls h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-water);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.water-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-water {
+    flex: 1;
+    background: rgba(0, 250, 154, 0.15);
+    color: var(--color-water);
+    border: 1px solid rgba(0, 250, 154, 0.3);
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-water:active {
+    transform: scale(0.95);
+    background: rgba(0, 250, 154, 0.3);
+}
+/* --- HISTORIAL --- */
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.history-date {
+    font-weight: 700;
+    color: var(--color-kcal);
+    margin-bottom: 8px;
+}
+
+.history-macros {
+    font-size: 14px;
+    color: #aaa;
+}
+.btn-water[data-amount="-250"] {
+    background-color: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    color: #ff6b6b;
+}
+
+.btn-water[data-amount="-250"]:hover {
+    background-color: rgba(255, 107, 107, 0.3);
+}
