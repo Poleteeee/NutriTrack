@@ -11,6 +11,99 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// --- NUEVA BASE DE DATOS DE ALIMENTOS ---
+let baseDatosAlimentos = JSON.parse(localStorage.getItem('nutritrack_alimentos')) || [];
+
+window.actualizarSelector = function() {
+    const selector = document.getElementById('selector-alimentos');
+    if (!selector) return;
+    
+    selector.innerHTML = '<option value="">Selecciona un alimento de tu lista...</option>';
+    
+    baseDatosAlimentos.forEach((alimento, index) => {
+        const opcion = document.createElement('option');
+        opcion.value = index;
+        opcion.textContent = alimento.nombre;
+        selector.appendChild(opcion);
+    });
+};
+
+window.guardarAlimento = function() {
+    const nombre = document.getElementById('nuevo-nombre').value;
+    const protes = parseFloat(document.getElementById('nuevo-protes').value);
+    const carbos = parseFloat(document.getElementById('nuevo-carbos').value);
+    const grasas = parseFloat(document.getElementById('nuevo-grasas').value);
+
+    if (!nombre || isNaN(protes) || isNaN(carbos) || isNaN(grasas)) {
+        alert("Por favor, rellena todos los campos del alimento.");
+        return;
+    }
+
+    // Cálculo automático de kcal por 100g (Proteínas*4, Carbos*4, Grasas*9)
+    const kcal = (protes * 4) + (carbos * 4) + (grasas * 9);
+
+    const nuevoAlimento = { nombre, kcal, protes, carbos, grasas };
+    baseDatosAlimentos.push(nuevoAlimento);
+    localStorage.setItem('nutritrack_alimentos', JSON.stringify(baseDatosAlimentos));
+    
+    document.getElementById('nuevo-nombre').value = '';
+    document.getElementById('nuevo-protes').value = '';
+    document.getElementById('nuevo-carbos').value = '';
+    document.getElementById('nuevo-grasas').value = '';
+
+    alert(`¡Alimento guardado! Calculadas ${Math.round(kcal)} kcal / 100g.`);
+    window.actualizarSelector();
+};
+
+window.calcularYRegistrar = function() {
+    const indexAlimento = document.getElementById('selector-alimentos').value;
+    const gramos = parseFloat(document.getElementById('cantidad-gramos').value);
+
+    if (indexAlimento === "" || isNaN(gramos) || gramos <= 0) {
+        alert("Selecciona un alimento y pon una cantidad válida en gramos.");
+        return;
+    }
+
+    const alimento = baseDatosAlimentos[indexAlimento];
+    const factor = gramos / 100;
+    
+    const p = alimento.protes * factor;
+    const c = alimento.carbos * factor;
+    const f = alimento.grasas * factor;
+    const kcal = alimento.kcal * factor;
+
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    // Creamos el objeto de la comida (Añadimos los gramos al nombre para que lo veas en el historial)
+    const foodItem = { 
+        name: `${alimento.nombre} (${gramos}g)`, 
+        protein: p, 
+        carbs: c, 
+        fats: f, 
+        kcal: kcal, 
+        time: time 
+    };
+    
+    const todayData = getTodayData();
+    if (!todayData.current) {
+        todayData.current = { kcal: 0, protein: 0, carbs: 0, fats: 0, water: 0 };
+    }
+    
+    todayData.foods.push(foodItem);
+    todayData.current.kcal += kcal;
+    todayData.current.protein += p;
+    todayData.current.carbs += c;
+    todayData.current.fats += f;
+    
+    saveTodayData(todayData);
+    window.initDashboard();
+    
+    document.getElementById('modal-add-food').classList.add('hidden');
+    document.getElementById('cantidad-gramos').value = '';
+    document.getElementById('selector-alimentos').value = '';
+};
+
 // 2. Lógica principal de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
     const profile = getProfile();
@@ -18,13 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardScreen = document.getElementById('dashboard');
     const settingsScreen = document.getElementById('settings-screen');
     const historyScreen = document.getElementById('history-screen');
+    const statsScreen = document.getElementById('stats-screen');
+
+    // Inicializar el desplegable de alimentos al cargar
+    window.actualizarSelector();
 
     // --- INICIALIZACIÓN ---
     if (!profile) {
         document.getElementById('setup-screen').classList.remove('hidden');
         dashboardScreen.classList.add('hidden');
     } else {
-        initDashboard();
+        window.initDashboard();
     }
 
     // --- CONFIGURACIÓN INICIAL (SETUP) ---
@@ -42,82 +139,17 @@ document.addEventListener('DOMContentLoaded', () => {
         saveProfile(newProfile, targets);
         
         document.getElementById('setup-screen').classList.add('hidden');
-        initDashboard();
-    });
-
-    // --- MODAL: CÁLCULO DINÁMICO DE KCAL ---
-    const updatePreviewKcal = () => {
-        const p = parseFloat(document.getElementById('food-p').value) || 0;
-        const c = parseFloat(document.getElementById('food-c').value) || 0;
-        const f = parseFloat(document.getElementById('food-g').value) || 0;
-        document.getElementById('food-kcal-preview').innerText = calculateFoodKcal(p, c, f);
-    };
-
-    ['food-p', 'food-c', 'food-g'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', updatePreviewKcal);
-    });
-
-    // --- AUTOCOMPLETADO INTELIGENTE AL ESCRIBIR O SELECCIONAR ---
-    const foodNameInput = document.getElementById('food-name');
-    foodNameInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const frequentFoods = getFrequentFoods();
-        const matchedFood = frequentFoods.find(f => f.name.toLowerCase() === query);
-
-        if (matchedFood) {
-            document.getElementById('food-p').value = matchedFood.protein;
-            document.getElementById('food-c').value = matchedFood.carbs;
-            document.getElementById('food-g').value = matchedFood.fats;
-            updatePreviewKcal();
-        }
+        window.initDashboard();
     });
 
     // --- MODAL: ABRIR / CERRAR ---
     document.getElementById('fab-add').addEventListener('click', () => {
-        renderFoodSuggestions();
+        window.actualizarSelector(); // Refrescar por si añadiste algo nuevo
         document.getElementById('modal-add-food').classList.remove('hidden');
     });
     
     document.getElementById('btn-cancel').addEventListener('click', () => {
         document.getElementById('modal-add-food').classList.add('hidden');
-    });
-
-    // --- GUARDAR NUEVA COMIDA ---
-    document.getElementById('food-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const name = document.getElementById('food-name').value;
-        const p = parseFloat(document.getElementById('food-p').value) || 0;
-        const c = parseFloat(document.getElementById('food-c').value) || 0;
-        const f = parseFloat(document.getElementById('food-g').value) || 0;
-        const kcal = calculateFoodKcal(p, c, f);
-        
-        const now = new Date();
-        const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-        const foodItem = { name, protein: p, carbs: c, fats: f, kcal, time };
-        
-        // Guardar en frecuentes para autocompletado futuro
-        saveFrequentFood(foodItem);
-
-        const todayData = getTodayData();
-        if (!todayData.current) {
-            todayData.current = { kcal: 0, protein: 0, carbs: 0, fats: 0, water: 0 };
-        }
-        
-        todayData.foods.push(foodItem);
-        todayData.current.kcal += kcal;
-        todayData.current.protein += p;
-        todayData.current.carbs += c;
-        todayData.current.fats += f;
-        
-        saveTodayData(todayData);
-        initDashboard();
-        
-        document.getElementById('modal-add-food').classList.add('hidden');
-        document.getElementById('food-form').reset();
-        document.getElementById('food-kcal-preview').innerText = '0';
     });
 
     // --- ELIMINAR COMIDA ---
@@ -140,31 +172,30 @@ document.addEventListener('DOMContentLoaded', () => {
             todayData.foods.splice(index, 1);
             
             saveTodayData(todayData);
-            initDashboard();
+            window.initDashboard();
         }
     });
 
     // --- AÑADIR / RESTAR AGUA ---
-document.querySelectorAll('.btn-water').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const amount = parseInt(e.target.getAttribute('data-amount'));
-        const todayData = getTodayData();
-        
-        if (!todayData.current) {
-            todayData.current = { kcal: 0, protein: 0, carbs: 0, fats: 0, water: 0 };
-        }
-        if (typeof todayData.current.water === 'undefined') {
-            todayData.current.water = 0;
-        }
-        
-        todayData.current.water += amount;
-        // Evitamos que el agua sea menor a 0
-        todayData.current.water = Math.max(0, todayData.current.water);
-        
-        saveTodayData(todayData);
-        initDashboard();
+    document.querySelectorAll('.btn-water').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const amount = parseInt(e.target.getAttribute('data-amount'));
+            const todayData = getTodayData();
+            
+            if (!todayData.current) {
+                todayData.current = { kcal: 0, protein: 0, carbs: 0, fats: 0, water: 0 };
+            }
+            if (typeof todayData.current.water === 'undefined') {
+                todayData.current.water = 0;
+            }
+            
+            todayData.current.water += amount;
+            todayData.current.water = Math.max(0, todayData.current.water);
+            
+            saveTodayData(todayData);
+            window.initDashboard();
+        });
     });
-});
 
     // --- NAVEGACIÓN Y GESTIÓN DE AJUSTES ---
     document.getElementById('btn-open-settings').addEventListener('click', () => {
@@ -201,7 +232,7 @@ document.querySelectorAll('.btn-water').forEach(btn => {
         
         settingsScreen.classList.add('hidden');
         dashboardScreen.classList.remove('hidden');
-        initDashboard();
+        window.initDashboard();
     });
 
     // --- NAVEGACIÓN Y GESTIÓN DE HISTORIAL ---
@@ -250,31 +281,7 @@ document.querySelectorAll('.btn-water').forEach(btn => {
         });
     }
 
-}); // <-- FIN DEL DOMContentLoaded
-
-// --- FUNCIONES GLOBALES ---
-function initDashboard() {
-    document.getElementById('dashboard').classList.remove('hidden');
-    const targets = getTargets();
-    const todayData = getTodayData();
-    
-    updateDashboardRings(todayData.current, targets);
-    renderFoodList(todayData.foods);
-    renderFoodSuggestions();
-}
-
-function renderFoodSuggestions() {
-    const datalist = document.getElementById('food-suggestions');
-    if (!datalist) return;
-    datalist.innerHTML = '';
-    
-    const frequentFoods = getFrequentFoods();
-    frequentFoods.forEach(food => {
-        const option = document.createElement('option');
-        option.value = food.name;
-        datalist.appendChild(option);
-    });
-}const statsScreen = document.getElementById('stats-screen');
+    // --- GRÁFICOS (STATS) ---
     let myChart = null;
 
     document.getElementById('btn-open-stats').addEventListener('click', () => {
@@ -331,3 +338,15 @@ function renderFoodSuggestions() {
             }
         });
     }
+
+}); // <-- FIN DEL DOMContentLoaded
+
+// --- FUNCIONES GLOBALES COMPLEMENTARIAS ---
+window.initDashboard = function() {
+    document.getElementById('dashboard').classList.remove('hidden');
+    const targets = getTargets();
+    const todayData = getTodayData();
+    
+    updateDashboardRings(todayData.current, targets);
+    renderFoodList(todayData.foods);
+};
