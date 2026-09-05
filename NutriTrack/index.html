@@ -39,7 +39,7 @@
 <section id="settings-screen" class="screen hidden">
     <header>
         <h1>Ajustes</h1>
-        <button id="btn-close-settings" class="btn-secondary">Volver</button>
+       <button type="button" id="btn-close-settings" class="close-btn" style="position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: white; font-size: 30px; cursor: pointer; line-height: 1;">&times;</button>
     </header>
     <div class="glass-container">
         <form id="settings-form">
@@ -76,8 +76,8 @@
 <section id="history-screen" class="screen hidden">
     <header>
         <h1>Historial</h1>
-        <button id="btn-close-history" class="btn-secondary">Volver</button>
-    </header>
+        <button type="button" id="btn-close-history" class="close-btn" style="position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: white; font-size: 30px; cursor: pointer; line-height: 1;">&times;</button>
+    <h2>Historial</h2>
     <div class="glass-container">
         <div id="history-list" class="history-list"></div>
     </div>
@@ -232,26 +232,44 @@
         <canvas id="caloriesChart"></canvas>
     </div>
 </section>
-    <!-- MODAL AÑADIR COMIDA -->
-    <!-- MODAL AÑADIR COMIDA -->
-    <div id="modal-add-food" class="modal hidden">
-        <div class="glass-modal">
-            <h2>Añadir Comida</h2>
-            <!-- Se eliminó la barra de búsqueda de aquí -->
-            <form id="food-form">
-                <input type="text" id="food-name" placeholder="Nombre" list="food-suggestions" required>
-                <datalist id="food-suggestions"></datalist>
-                <input type="number" id="food-p" placeholder="Proteínas (g)" required>
-                <input type="number" id="food-c" placeholder="Carbohidratos (g)" required>
-                <input type="number" id="food-g" placeholder="Grasas (g)" required>
-                <div class="auto-kcal">Kcal calculadas: <span id="food-kcal-preview">0</span></div>
-                <div class="modal-actions">
-                    <button type="button" id="btn-cancel" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">Guardar</button>
-                </div>
-            </form>
+  <!-- MODAL AÑADIR COMIDA -->
+<div id="modal-add-food" class="modal hidden">
+    <div class="glass-modal" style="position: relative;">
+        <!-- Botón de cierre en forma de X -->
+        <button type="button" id="btn-cancel" class="close-btn" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: white; font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
+        
+        <h2>Añadir Comida</h2>
+        
+        <!-- SECCIÓN 1: USO DIARIO -->
+        <div class="seccion-registrar-comida" style="margin-bottom: 20px;">
+            <h3 style="font-size: 1rem; margin-bottom: 10px;">¿Qué has comido?</h3>
+            <select id="selector-alimentos" required style="width: 100%; margin-bottom: 10px; padding: 10px; border-radius: 8px;">
+                <option value="">Selecciona un alimento de tu lista...</option>
+            </select>
+            
+            <input type="number" id="cantidad-gramos" placeholder="Gramos consumidos (ej. 150)" required>
+            
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button type="button" onclick="calcularYRegistrar()" class="btn-primary" style="width: 100%;">Añadir a mis macros</button>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 15px 0;">
+
+        <!-- SECCIÓN 2: CREAR ALIMENTO NUEVO (Sin Kcal manuales) -->
+        <div class="seccion-crear-alimento">
+            <h3 style="font-size: 1rem; margin-bottom: 10px;">Crear alimento nuevo (x 100g)</h3>
+            <input type="text" id="nuevo-nombre" placeholder="Nombre (ej. Arroz blanco)">
+            <input type="number" id="nuevo-protes" placeholder="Proteínas (g)">
+            <input type="number" id="nuevo-carbos" placeholder="Carbohidratos (g)">
+            <input type="number" id="nuevo-grasas" placeholder="Grasas (g)">
+            
+            <div class="modal-actions" style="margin-top: 10px;">
+                <button type="button" onclick="guardarAlimento()" class="btn-primary" style="width: 100%;">Guardar en Base de Datos</button>
+            </div>
         </div>
     </div>
+</div>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
