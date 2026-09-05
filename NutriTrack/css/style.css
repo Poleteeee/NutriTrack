@@ -308,3 +308,21 @@ circle { fill: none; stroke-linecap: round; }
 .btn-water[data-amount="-250"]:hover {
     background-color: rgba(255, 107, 107, 0.3);
 }
+
+/* Estilo global para todos los menús desplegables en PC y escritorio */
+select {
+    background-color: #222 !important;
+    color: white !important;
+    border: 1px solid #444 !important;
+}
+
+select option {
+    background-color: #222 !important;
+    color: white !important;
+    padding: 10px;
+}
+.close-btn:hover {
+    color: #ff6b6b !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
